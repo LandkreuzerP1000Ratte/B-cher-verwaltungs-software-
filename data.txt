@@ -1,1 +1,2 @@
-barcode:153 / titel:286 / autor:267 / verlag:169 / status:109 / wer:330 / art:272
+barcode:199 / titel:198 / autor:198 / verlag:198 / status:198 / wer:198 / art:198 / cover:199
+barcode:1 / titel:1 / autor:1 / verlag:1 / status:1 / wer:1 / art:1 / cover:1
