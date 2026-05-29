@@ -14,6 +14,9 @@ import keyboard as key
 import pyperclip
 import cv2
 from PIL import Image, ImageTk
+import subprocess
+import pygetwindow as gw
+
 
 #--------
 #18ad1f
@@ -34,7 +37,7 @@ manu_oder_auto = "auto"
 pause = None
 extra_window_ändere_pause = None
 buecher = []
-checkbox_vars = {}  # reset
+checkbox_vars = {}
 
 table_entries = []
 selected_row = None
@@ -108,7 +111,7 @@ def make_cover(tree):
     cap = cv2.VideoCapture(0)
 
     root2 = tk.Toplevel(root)
-    root2.title("DroidCam Crop Tool")
+    root2.title("new cover")
 
     canvas = tk.Canvas(root2)
     canvas.pack()
@@ -130,7 +133,7 @@ def make_cover(tree):
 def save(current_frame, bar):
     path = os.path.join(__location__, "data", "covers")
     cv2.imwrite(os.path.join(path, f"{bar}.png"), current_frame)
-    barcode_win.destroy()
+    barcode_win.destroy() 
     key.remove_hotkey("space", barcode)
 
 def redo():
@@ -139,6 +142,8 @@ def redo():
 
 
 def barcode():
+
+    key.remove_hotkey("space")
     global current_frame
     global bar
     global barcode_win
@@ -168,7 +173,7 @@ def barcode():
     selection = tree.selection()
     if selection:
         values = tree.item(selection[0])["values"]
-        bar = values[0]
+        bar = values[1]
         e.insert(0, bar)
 
 
@@ -195,7 +200,7 @@ def show_frame():
         # Wichtig: vorher löschen, sonst werden Bilder gestapelt
         canvas.delete("all")
         canvas.create_image(0, 0, anchor="nw", image=imgtk)
-
+    print("f")
     root2.after(10, show_frame)
 
 #---------------------------------------------------------------------
@@ -217,25 +222,38 @@ def delete(tree):
 
 #-------------------------------------------------------
 
-def sort_buecher(event=None):
+def save_books(tree):
     global buecher
 
-    suchtext = entry1.get().lower()
-    kategorie = opt.get().lower()
+    # Erst gefilterte Änderungen zurück in die globale Liste schreiben
+    alle_buecher = lade_buecher("formated_books.txt")
 
-    alle_buecher = lade_buecher(os.path.join(__location__, "data", "formated_books.txt"))
+    # Index-basiertes Dict der geladenen Bücher
+    buecher_dict = {b.index: b for b in alle_buecher}
 
-    if suchtext == "":
-        buecher = alle_buecher
-    else:
-        buecher = []
+    # Sichtbare Einträge im Tree aktualisieren
+    for item_id in tree.get_children():
+        values = tree.item(item_id, "values")
+        idx = str(values[0])
+        if idx in buecher_dict:
+            b = buecher_dict[idx]
+            b.index   = values[0]
+            b.barcode = values[1]
+            b.titel   = values[2]
+            b.autor   = values[3]
+            b.verlag  = values[4]
+            b.status  = values[5]
+            b.wer     = values[6]
+            b.art     = values[7]
+            b.cover   = values[8]
 
-        for buch in alle_buecher:
-            wert = getattr(buch, kategorie, "").lower()
-            if suchtext in wert:
-                buecher.append(buch)
 
-    reload_table()
+    path = os.path.join(__location__, "data", "formated_books.txt")
+    with open(path, "w", encoding="utf-8") as f:
+        for b in buecher_dict.values():
+            line = f"{b.index} | {b.barcode} | {b.titel} | {b.autor} | {b.verlag} | {b.status} | {b.wer} | {b.art} | {b.cover}"
+            f.write(line + "\n")
+            print(f"saved: {line}")
 
 #-------------------------------------------------------
 
@@ -382,11 +400,11 @@ def create_table(parent, buecher):
         "Treeview",
         background="white",
         fieldbackground="white",
-        foreground="black"
+        foreground="lightgrey"
     )
 
     style.map("Treeview",
-        background=[("selected", "#347083")]
+        background=[("selected", "#3acc7b")]
     )
 
     # Gridlines aktivieren
@@ -397,11 +415,13 @@ def create_table(parent, buecher):
         relief="solid"
     )
 
-    style.configure(
+    style.configure(    
         "Treeview.Heading",
         font=("Arial", 14, "bold"),
         borderwidth=1,
-        relief="solid"
+        relief="solid",
+        background="#2ca362",
+        foreground="white"
     )
 
     tree = ttk.Treeview(
@@ -411,9 +431,9 @@ def create_table(parent, buecher):
         selectmode="browse",
         height=52
     )
-
-    tree.tag_configure("oddrow", background="#f2f2f2")
-    tree.tag_configure("evenrow", background="white")
+    #f2f2f2
+    tree.tag_configure("oddrow", background="#30aa67")
+    tree.tag_configure("evenrow", background="#289157")
 
     scrollbar = ttk.Scrollbar(parent, orient="vertical", command=tree.yview)
     tree.configure(yscrollcommand=scrollbar.set)
@@ -487,15 +507,25 @@ def get_width(tree):
 
 #-------------------------------------------------------
 
-def save_books(tree):
-    path = os.path.join(__location__, "data", "formated_books.txt")
+def sort_buecher(event=None):
+    global buecher
 
-    with open(path, "w", encoding="utf-8") as f:
-        for item_id in tree.get_children():
-            values = tree.item(item_id, "values")
-            line = " | ".join(str(v) for v in values)
-            f.write(line + "\n")
-            print(f"saved: {line}")
+    suchtext = entry1.get().lower()
+    kategorie = opt.get().lower()
+
+    alle_buecher = lade_buecher(os.path.join(__location__, "data", "formated_books.txt"))
+
+    if suchtext == "":
+        buecher = alle_buecher
+    else:
+        buecher = []
+
+        for buch in alle_buecher:
+            wert = getattr(buch, kategorie, "").lower()
+            if suchtext in wert:
+                buecher.append(buch)
+
+    reload_table()
 
 #-------------------------------------------------------
 
@@ -756,7 +786,7 @@ def info_text(event=None):
 
 # Cover laden
     data = dict(zip(columns, values))
-    cover_name = data.get("index", "")
+    cover_name = data.get("barcode", "")
 
     if cover_name:
         image_path = os.path.join(__location__, "data", "covers", f"{cover_name}.png")
@@ -773,7 +803,42 @@ def info_text(event=None):
         else:
             Label(info_frame, text="Kein Cover gefunden", bg="#26774a",
                   fg="white", font=("Arial", 8, "italic")).pack(pady=5)
-    
+
+#-------------------------------------------------------
+
+def check_covers():
+    alle_buecher = lade_buecher("formated_books.txt")
+    covers_path = os.path.join(__location__, "data", "covers")
+
+    for buch in alle_buecher:
+        image_path = os.path.join(covers_path, f"{buch.barcode}.png")
+        buch.cover = "True" if os.path.exists(image_path) else "False"
+
+    path = os.path.join(__location__, "data", "formated_books.txt")
+    with open(path, "w", encoding="utf-8") as f:
+        for b in alle_buecher:
+            line = f"{b.index} | {b.barcode} | {b.titel} | {b.autor} | {b.verlag} | {b.status} | {b.wer} | {b.art} | {b.cover}"
+            f.write(line + "\n")
+
+    reload_table()
+    print("Cover-Check abgeschlossen")
+
+#-------------------------------------------------------
+
+def cover_bearbeiten():
+
+    selection = tree.selection()
+    if selection:
+        values = tree.item(selection[0])["values"]
+        bar = values[1]
+
+    path = os.path.join(__location__, "data", "covers")
+    subprocess.run(['explorer', (os.path.join(path, f"{bar}.png"))])
+
+    wins = gw.getWindowsWithTitle('Windows-Fotoanzeige')
+
+    if wins:
+        wins[0].activate()
 
 #-------------------------------------------------------
 
@@ -825,7 +890,8 @@ filemenu3 = Menu(menubar, tearoff=0)
 menubar.add_cascade(label="books", menu=filemenu3)
 
 filemenu3.add_command(label="configure",   command=lambda: zeige_frame(frame_bearbeiten))
-filemenu3.add_command(label="save",        command=lambda: save_books(tree))
+filemenu3.add_command(label="Save",        command=lambda: save_books(tree))
+filemenu3.add_command(label="Check covers", command=check_covers)
 
 
 filemenu4 = Menu(menubar, tearoff=0)
@@ -987,7 +1053,7 @@ m2 = Menu(m, tearoff=0)
 m.add_cascade(label="Bild", menu=m2)
 
 m2.add_command(label="Neues Bild", command=lambda: make_cover(tree))
-m2.add_command(label="Bild Bearbeiten", command=donothing)
+m2.add_command(label="Bild Bearbeiten", command=cover_bearbeiten)
 m2.add_command(label="Größe ändern", command=donothing)
 m2.add_command(label="Löschen", command=lambda: delete(tree))
 
