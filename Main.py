@@ -781,23 +781,20 @@ def on_start():
 
 #-------------------------------------------------------
 
-def change_info_text():
+def change_info_text(Button):
     global is_button_active
-    is_button_active = not is_button_active
 
-    if is_button_active == True:
+    if Button == "left":
         for widget in info_frame.winfo_children():
-            if widget != test_button:
+            if widget != info_button_left or info_button_right:
                 widget.destroy()
-
-    else:
+            
         selection = tree.selection()
         if not selection:
             Label(info_frame, text="Kein Buch ausgewählt", bg="#30aa67",
             fg="white", font=("Arial", 9, "italic")).pack(padx=5, pady=30)
 
 
-    # Button(info_frame, bg= )
 
 
 
@@ -810,7 +807,7 @@ def info_text(event=None):
         selection = tree.selection()
 
         for widget in info_frame.winfo_children():
-            if widget != test_button:
+            if widget != info_button_left or info_button_right:
                 widget.destroy()
 
         if not selection:
@@ -910,44 +907,12 @@ print(__location__)
 frame_start = Frame(root, bg="#289157")
 frame_bearbeiten = Frame(root, bg="#26774a")
 frame_ausleihe = Frame(root, bg="#289157")
-frame_pausen_protokoll = Frame(root, bg="#289157")
-frame_einstellungen = Frame(root, bg="#289157")
 
 
 # Alle Frames im Fenster platzieren (übereinander)
-for frame in (frame_start, frame_bearbeiten, frame_ausleihe, frame_pausen_protokoll):
+for frame in (frame_start, frame_bearbeiten, frame_ausleihe):
     frame.place(relwidth=1, relheight=1)
 
-
-#     menubar = Menu(root)
-#     menubar.config(bg="#289157", activebackground="#289157")
-# root.config(menu=menubar)
-
-
-
-# filemenu1 = Menu(menubar, tearoff=0)
-# filemenu1.config(bg="#289157", fg="white")
-# menubar.add_cascade(label="genereal", menu=filemenu1)
-
-# filemenu1.add_command(label="test")
-# filemenu1.add_separator()
-# filemenu1.add_command(label="close", command=on_close)
-
-
-# filemenu2 = Menu(menubar, tearoff=0)
-# filemenu2.config(bg="#289157", fg="white")
-# menubar.add_cascade(label="students", menu=filemenu2)
-
-# filemenu2.add_command(label="search", command=donothing)
-
-
-# filemenu3 = Menu(menubar, tearoff=0)
-# filemenu3.config(bg="#289157", fg="white")
-# menubar.add_cascade(label="books", menu=filemenu3)
-
-# filemenu3.add_command(label="configure",   command=lambda: zeige_frame(frame_bearbeiten))
-# filemenu3.add_command(label="Save",        command=lambda: save_books(tree))
-# filemenu3.add_command(label="Check covers", command=check_covers)
 
 
 # -------------------------
@@ -1066,7 +1031,7 @@ datum(Time, pause)
 
 #------------------------------------------------------------------------------
 
-Button2 = Button(frame_bearbeiten ,bg="#289157", fg="white", textvariable=Time ,width=15 ,height=(1) ,font=("Arial", 8)).place(x=1773, y=0)
+Button2 = Button(frame_bearbeiten ,bg="#289157", fg="white", textvariable=Time, width=15 ,height=(1) ,font=("Arial", 8)).place(x=1773, y=0)
 
 #------------------------------------------------------------------------------
 
@@ -1098,7 +1063,9 @@ info_frame.place(relx=0.836, rely=0.09, relwidth=0.164, relheight=0.91)
 
 is_button_active = False
 
-test_button = Button(frame_bearbeiten, text="≣≣≣≣≣≣≣≣≣≣≣≣", bg="#2b8654", fg="white", bd=0, activebackground="#2b8654", command=change_info_text).place(x=screen_width-305, rely=0.082, relwidth=0.164)
+info_button_left = Button(frame_bearbeiten,  text="Bücher",  bg="#289157",  activebackground="#289157",  fg="white", relief="sunken", activeforeground="white", command=lambda: change_info_text(Button="left")).place(relx=0.836, rely=0.0818, relwidth=0.0815)
+
+info_button_right = Button(frame_bearbeiten, text="Frames",  bg="#289157",   activebackground="#289157", fg="white",                  activeforeground="white", command=lambda: change_info_text(Button="right")).place(relx=0.916, rely=0.0818, relwidth=0.084)
 
 #------------------------------------------------------------------------------
 
@@ -1138,24 +1105,6 @@ heading_m = Menu(root,tearoff=0)
 
 heading_m.add_command(label="change headings", command=pop_change_headings)
 
-#------------------------------------------------------------------------------
-
-# -------------------------
-# Einstellungen
-# -------------------------
-Label1 = Label(frame_einstellungen, text="Error 404", font=("Arial", 28), bg="#f0f0f0").pack(pady=20)
-Label2 = Label(frame_einstellungen, text="Work in procress", font=("Arial", 28), bg="#f0f0f0").pack(pady=20)
-
-# -------------------------
-# Pausen Protokoll
-# -------------------------
-
-Label1 = Label(frame_pausen_protokoll, text="Ausleihe", font=("Arial", 28), bg="#f0f0f0").pack(pady=20)
-
-
-# -------------------------
-# Startseite anzeigen
-# -------------------------
 
 zeige_frame(frame_start)
 zeige_frame(frame_bearbeiten)
