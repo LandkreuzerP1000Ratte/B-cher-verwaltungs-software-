@@ -1,5 +1,3 @@
-    
-
 
 # I'm sorry
 
@@ -134,7 +132,7 @@ def save(current_frame, bar):
     path = os.path.join(__location__, "data", "covers")
     cv2.imwrite(os.path.join(path, f"{bar}.png"), current_frame)
     barcode_win.destroy() 
-    key.remove_hotkey("space", barcode)
+    key.remove_hotkey("space")
 
 def redo():
     barcode_win.destroy()
@@ -388,7 +386,7 @@ def pop_change_headings():
         command=apply_column_visibility
     ).grid(row=len(columns) + 1, pady=10)
 
-#-------------------------------------------------------
+#---------------------------------------------------------
 
 def create_table(parent, buecher):
     global tree
@@ -404,10 +402,15 @@ def create_table(parent, buecher):
     )
 
     style.map("Treeview",
-        background=[("selected", "#3acc7b")]
+        background=[("selected", "#26A760")]
     )
 
-    # Gridlines aktivieren
+    style.map(
+        "Treeview.Heading",
+        background=[("active", "#278652")],
+        foreground=[("active", "white")]
+    )
+
     style.configure(
         "Treeview",
         rowheight=25,
@@ -415,15 +418,15 @@ def create_table(parent, buecher):
         relief="solid"
     )
 
-    style.configure(    
+    style.configure(
         "Treeview.Heading",
         font=("Arial", 14, "bold"),
-        borderwidth=1,
-        relief="solid",
-        background="#2ca362",
-        foreground="white"
-    )
+        background="#278652",
+        foreground="white",
+        relief="groove",
+        borderwidth=1
 
+    )
     tree = ttk.Treeview(
         parent,
         columns=columns,
@@ -431,9 +434,26 @@ def create_table(parent, buecher):
         selectmode="browse",
         height=52
     )
-    #f2f2f2
-    tree.tag_configure("oddrow", background="#30aa67")
+
+    style.configure(
+    "Vertical.TScrollbar",
+    background="#289157",      # Schieber-Farbe
+    troughcolor="#26774a",     # Hintergrund der Leiste
+    arrowcolor="white",        # Pfeil-Farbe
+    bordercolor="#289157",
+    lightcolor="#289157",
+    darkcolor="#1a5c38"
+    
+    )
+
+    style.map(
+        "Vertical.TScrollbar",
+        background=[("active", "#26A760")]  # Farbe beim Hovern
+    )
+
     tree.tag_configure("evenrow", background="#289157")
+    tree.tag_configure("oddrow", background="#26774a")
+
 
     scrollbar = ttk.Scrollbar(parent, orient="vertical", command=tree.yview)
     tree.configure(yscrollcommand=scrollbar.set)
@@ -478,7 +498,7 @@ def create_table(parent, buecher):
 
     tree.bind("<Button-3>", popup)
 
-#-------------------------------------------------------
+#---------------------------------------------------------
 
 def get_width(tree):
     path = os.path.join(__location__, "data.txt")
@@ -761,48 +781,76 @@ def on_start():
 
 #-------------------------------------------------------
 
+def change_info_text():
+    global is_button_active
+    is_button_active = not is_button_active
+
+    if is_button_active == True:
+        for widget in info_frame.winfo_children():
+            if widget != test_button:
+                widget.destroy()
+
+    else:
+        selection = tree.selection()
+        if not selection:
+            Label(info_frame, text="Kein Buch ausgewählt", bg="#30aa67",
+            fg="white", font=("Arial", 9, "italic")).pack(padx=5, pady=30)
+
+
+    # Button(info_frame, bg= )
+
+
+
+#-------------------------------------------------------
+
 def info_text(event=None):
-    """Zeigt alle Felder des ausgewählten Buches im info_frame an."""
-    selection = tree.selection()
+    global is_button_active
+    if is_button_active == False:
+        """Zeigt alle Felder des ausgewählten Buches im info_frame an."""
+        selection = tree.selection()
 
-    for widget in info_frame.winfo_children():
-        widget.destroy()
+        for widget in info_frame.winfo_children():
+            if widget != test_button:
+                widget.destroy()
 
-    if not selection:
-        Label(info_frame, text="Kein Buch ausgewählt", bg="#34700c",
-              fg="white", font=("Arial", 9, "italic")).pack(padx=5, pady=10)
-        return
+        if not selection:
+            Label(info_frame, text="Kein Buch ausgewählt", bg="#30aa67",
+                fg="white", font=("Arial", 9, "italic")).pack(padx=5, pady=30)
+            return
 
-    values = tree.item(selection[0])["values"]
+        values = tree.item(selection[0])["values"]
 
-    # Felder anzeigen
-    for c, v in zip(columns, values):
-        if c == "index":
-            continue
-        Label(info_frame, text=c.capitalize(), bg="#1fc76a", fg="white",
-              font=("Arial", 9, "bold"), anchor="w").pack(fill="x", padx=5, pady=(4, 0))
-        Label(info_frame, text=v, bg="#30aa67", fg="white",
-              font=("Arial", 9), anchor="w").pack(fill="x", padx=10)
+        Frame(info_frame, bg="#26774a", height=30).pack(fill="x")  # 30px Abstand
 
-# Cover laden
-    data = dict(zip(columns, values))
-    cover_name = data.get("barcode", "")
+        for c, v in zip(columns, values):
+            if c == "index":
+                continue
+            Label(info_frame, text=c.capitalize(), bg="#1fc76a", fg="white",
+                font=("Arial", 9, "bold"), anchor="w").pack(fill="x", padx=5, pady=(5, 0))
+            Label(info_frame, text=v, bg="#30aa67", fg="white",
+                font=("Arial", 9), anchor="w").pack(fill="x", padx=10)
 
-    if cover_name:
-        image_path = os.path.join(__location__, "data", "covers", f"{cover_name}.png")
-        print(image_path)
+    # Cover laden
+        data = dict(zip(columns, values))
+        cover_name = data.get("barcode", "")
 
-        if os.path.exists(image_path):
-            img = Image.open(image_path)
-            img.thumbnail((200, 200))
-            imgtk = ImageTk.PhotoImage(img)
+        if cover_name:
+            image_path = os.path.join(__location__, "data", "covers", f"{cover_name}.png")
+            print(image_path)
 
-            panel = Label(info_frame, image=imgtk, bg="#26774a")
-            panel.image = imgtk
-            panel.pack(pady=10)
-        else:
-            Label(info_frame, text="Kein Cover gefunden", bg="#26774a",
-                  fg="white", font=("Arial", 8, "italic")).pack(pady=5)
+            if os.path.exists(image_path):
+                img = Image.open(image_path)
+                img.thumbnail((200, 200))
+                imgtk = ImageTk.PhotoImage(img)
+
+                panel = Label(info_frame, image=imgtk, bg="#26774a")
+                panel.image = imgtk
+                panel.pack(pady=10)
+            else:
+                Label(info_frame, text="Kein Cover gefunden", bg="#26774a",
+                    fg="white", font=("Arial", 8, "italic")).pack(pady=5)
+    else:
+        pass
 
 #-------------------------------------------------------
 
@@ -851,6 +899,7 @@ root.title("Bücherverwaltung")
 root.attributes("-fullscreen", True)
 root.protocol("WM_DELETE_WINDOW", on_close)
 root.bind_all("<MouseWheel>", on_mousewheel)
+root.config(bg="#289157")
 
 __location__ = os.path.realpath(
     os.path.join(os.getcwd(), os.path.dirname(__file__)))
@@ -858,80 +907,70 @@ __location__ = os.path.realpath(
 print(__location__)
 
 # Frames erstellen (Seiten)
-frame_start = Frame(root, bg="#f0f0f0")
+frame_start = Frame(root, bg="#289157")
 frame_bearbeiten = Frame(root, bg="#26774a")
-frame_ausleihe = Frame(root, bg="#f0f0f0")
-frame_pausen_protokoll = Frame(root, bg="#f0f0f0")
-frame_einstellungen = Frame(root, bg="#f0f0f0")
+frame_ausleihe = Frame(root, bg="#289157")
+frame_pausen_protokoll = Frame(root, bg="#289157")
+frame_einstellungen = Frame(root, bg="#289157")
+
 
 # Alle Frames im Fenster platzieren (übereinander)
 for frame in (frame_start, frame_bearbeiten, frame_ausleihe, frame_pausen_protokoll):
     frame.place(relwidth=1, relheight=1)
 
-    menubar = Menu(root)
-root.config(menu=menubar)
+
+#     menubar = Menu(root)
+#     menubar.config(bg="#289157", activebackground="#289157")
+# root.config(menu=menubar)
 
 
-filemenu1 = Menu(menubar, tearoff=0)
-menubar.add_cascade(label="genereal", menu=filemenu1)
 
-filemenu1.add_command(label="test")
-filemenu1.add_separator()
-filemenu1.add_command(label="close", command=on_close)
+# filemenu1 = Menu(menubar, tearoff=0)
+# filemenu1.config(bg="#289157", fg="white")
+# menubar.add_cascade(label="genereal", menu=filemenu1)
 
-
-filemenu2 = Menu(menubar, tearoff=0)
-menubar.add_cascade(label="students", menu=filemenu2)
-
-filemenu2.add_command(label="search", command=donothing)
+# filemenu1.add_command(label="test")
+# filemenu1.add_separator()
+# filemenu1.add_command(label="close", command=on_close)
 
 
-filemenu3 = Menu(menubar, tearoff=0)
-menubar.add_cascade(label="books", menu=filemenu3)
+# filemenu2 = Menu(menubar, tearoff=0)
+# filemenu2.config(bg="#289157", fg="white")
+# menubar.add_cascade(label="students", menu=filemenu2)
 
-filemenu3.add_command(label="configure",   command=lambda: zeige_frame(frame_bearbeiten))
-filemenu3.add_command(label="Save",        command=lambda: save_books(tree))
-filemenu3.add_command(label="Check covers", command=check_covers)
-
-
-filemenu4 = Menu(menubar, tearoff=0)
-menubar.add_cascade(label="borrow", menu=filemenu4)
+# filemenu2.add_command(label="search", command=donothing)
 
 
-filemenu5 = Menu(menubar, tearoff=0)
-menubar.add_cascade(label="protocol", menu=filemenu5)
+# filemenu3 = Menu(menubar, tearoff=0)
+# filemenu3.config(bg="#289157", fg="white")
+# menubar.add_cascade(label="books", menu=filemenu3)
+
+# filemenu3.add_command(label="configure",   command=lambda: zeige_frame(frame_bearbeiten))
+# filemenu3.add_command(label="Save",        command=lambda: save_books(tree))
+# filemenu3.add_command(label="Check covers", command=check_covers)
 
 
 # -------------------------
 # Startseite mit Login links
 # -------------------------
-frame_start = Frame(root, bg="#f0f0f0")
+frame_start = Frame(root, bg="#289157")
 frame_start.place(relwidth=1, relheight=1)
 
 # Container für Left | Separator | Right 
-start_container = Frame(frame_start, bg="#f0f0f0")
+start_container = Frame(frame_start, bg="#289157")
 start_container.pack(side="right", fill="both", expand=True)
 
 # -------------------------
 # LEFT FRAME
 # -------------------------
-frame_start_left = Frame(start_container, bg="#f0f0f0")
+frame_start_left = Frame(start_container, bg="#289157")
 frame_start_left.pack(side="left", fill="both", expand=True)
 
-# -------------------------
-# SEPARATOR
-# -------------------------
-separator = ttk.Separator(start_container, orient="vertical")
-separator.place(
-    x=int(start_container.winfo_screenwidth() * 0.5),
-    y=0,
-    relheight=1
-)
 
 # -------------------------
 # RIGHT FRAME
 # -------------------------
-frame_start_right = Frame(start_container, bg="#f0f0f0")
+frame_start_right = Frame(start_container, bg="#289157")
 frame_start_right.pack(side="left", fill="both", expand=True)
 
 # Rechte Seite = Buttons
@@ -957,7 +996,7 @@ buttons.append(btn1)
 # -------------------------
 # Bücher bearbeiten
 # -------------------------
-container = Frame(frame_bearbeiten, bg="#fffff0f0f0ff")
+container = Frame(frame_bearbeiten, bg="#289157")
 container.place(relx=0, rely=0, relwidth=0.835, relheight=1)
 
 container.columnconfigure(0, weight=1)
@@ -972,21 +1011,48 @@ separator.place(
 #------------------------------------------------------------------------------
 
 drop_down_op = []
-
 for index, x in enumerate(columns):
-    if index == 0:
-        pass
-    else:
+    if index != 0:
         drop_down_op.append(x)
 
+opt = StringVar(value="barcode")
 
+search_options = tk.Menubutton(frame_bearbeiten,
+    textvariable=opt,
+    bg="#289157",
+    fg="white",
+    activebackground="#289157",
+    activeforeground="white",
+    font=("Calibri", 11),
+    relief="flat",
+    bd=0,
+    highlightthickness=0,
+    indicatoron=True,
+    width=10
+)
 
-opt = StringVar(value="Barcode")
-search_options = ttk.OptionMenu(frame_bearbeiten, opt, drop_down_op[0], *drop_down_op).place(x=1899-260 ,y=15)
+menu = tk.Menu(search_options, tearoff=0,
+    bg="#289157",
+    fg="white",
+    activebackground="#289157",
+    activeforeground="white",
+    font=("Calibri", 11),
+    borderwidth=0,
+    relief="flat",
+    activeborderwidth=0  # ← das ist der Übeltäter
+)
+
+menu.config(bg="#289157")
+
+for option in drop_down_op:
+    menu.add_command(label=option, command=lambda o=option: opt.set(o))
+
+search_options.config(menu=menu)
+search_options.place(x=1899-260, y=15)
 
 #------------------------------------------------------------------------------
 
-entry1 = Entry(frame_bearbeiten, width=40)
+entry1 = Entry(frame_bearbeiten, width=40, background="#289157")
 entry1.place(x=1900-262, y=40)
 entry1.focus_set()
 
@@ -1000,16 +1066,16 @@ datum(Time, pause)
 
 #------------------------------------------------------------------------------
 
-Button2 = Button(frame_bearbeiten ,textvariable=Time ,width=15 ,height=(1) ,font=("Arial", 8)).place(x=1773, y=0)
+Button2 = Button(frame_bearbeiten ,bg="#289157", fg="white", textvariable=Time ,width=15 ,height=(1) ,font=("Arial", 8)).place(x=1773, y=0)
 
 #------------------------------------------------------------------------------
 
-Button3 = Button(frame_bearbeiten ,textvariable=pause ,command=ändere_pause ,width=6, height=(1) ,font=("Arial", 8)).place(x=1873, y=0)
+Button3 = Button(frame_bearbeiten ,bg="#289157", fg="white", textvariable=pause ,command=ändere_pause ,width=6, height=(1) ,font=("Arial", 8)).place(x=1873, y=0)
 
 #------------------------------------------------------------------------------
 
 
-table_frame = Frame(container, bg="#f0f0f0")
+table_frame = Frame(container, bg="#289157")
 table_frame.grid(row=0, column=0, sticky="nsew")
 
 buecher = "formated_books.txt"
@@ -1030,16 +1096,21 @@ ttk.Separator(frame_bearbeiten, orient="horizontal", ).place(
 info_frame = Frame(frame_bearbeiten, bg="#26774a")
 info_frame.place(relx=0.836, rely=0.09, relwidth=0.164, relheight=0.91)
 
+is_button_active = False
+
+test_button = Button(frame_bearbeiten, text="≣≣≣≣≣≣≣≣≣≣≣≣", bg="#2b8654", fg="white", bd=0, activebackground="#2b8654", command=change_info_text).place(x=screen_width-305, rely=0.082, relwidth=0.164)
+
 #------------------------------------------------------------------------------
 
 info_text()
 
 #------------------------------------------------------------------------------
 
-m = Menu(root, tearoff=0)
+m = Menu(root, tearoff=0, bg="#289157", activebackground="#289157", fg="white")
 
 
 m1 = Menu(m, tearoff=0)
+m1.config(bg="#289157", fg="white")
 m.add_cascade(label="Kopieren", menu=m1)
 
 m1.add_command(label="Barcode", command=lambda: copy_from_treeview(tree, 0))
@@ -1048,13 +1119,13 @@ m1.add_command(label="Autor", command=lambda: copy_from_treeview(tree, 2))
 m1.add_command(label="Verlag", command=lambda: copy_from_treeview(tree, 3))
 
 
-
 m2 = Menu(m, tearoff=0)
+m2.config(bg="#289157", fg="white")
 m.add_cascade(label="Bild", menu=m2)
 
 m2.add_command(label="Neues Bild", command=lambda: make_cover(tree))
 m2.add_command(label="Bild Bearbeiten", command=cover_bearbeiten)
-m2.add_command(label="Größe ändern", command=donothing)
+m2.add_command(label="Check Covers", command=check_covers)
 m2.add_command(label="Löschen", command=lambda: delete(tree))
 
 
@@ -1066,18 +1137,6 @@ m.add_command(label="Bearbeiten", command=info_text)
 heading_m = Menu(root,tearoff=0)
 
 heading_m.add_command(label="change headings", command=pop_change_headings)
-
-
-
-#------------------------------------------------------------------------------
-
-# -------------------------
-# Ausleihe
-# -------------------------
-Label(frame_ausleihe,
-       text="Ausleihe",
-         font=("Arial", 28),
-           bg="#f0f0f0").pack(pady=20)
 
 #------------------------------------------------------------------------------
 
