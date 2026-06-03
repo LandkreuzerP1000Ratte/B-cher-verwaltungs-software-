@@ -39,6 +39,7 @@ checkbox_vars = {}
 
 table_entries = []
 selected_row = None
+button = None
 columns = ["index" ,"barcode","titel","autor","verlag","status","wer","art", "cover"]
 
 print(f'{screen_width}\n{screen_height}')
@@ -781,33 +782,32 @@ def on_start():
 
 #-------------------------------------------------------
 
-def change_info_text(Button):
-    global is_button_active
+def change_info_text(buton):
+    global button
 
-    if Button == "left":
-        for widget in info_frame.winfo_children():
-            if widget != info_button_left or info_button_right:
-                widget.destroy()
-            
-        selection = tree.selection()
-        if not selection:
-            Label(info_frame, text="Kein Buch ausgewählt", bg="#30aa67",
-            fg="white", font=("Arial", 9, "italic")).pack(padx=5, pady=30)
-
-
+    if buton == "left":
+        button = "left"
+        info_text_left()
+        info_button_left.config(relief="sunken")
+        info_button_right.config(relief="raised")
+    else:
+        button = "right"
+        info_text_right()
+        info_button_left.config(relief="raised")
+        info_button_right.config(relief="sunken")
 
 
 
 #-------------------------------------------------------
 
-def info_text(event=None):
-    global is_button_active
-    if is_button_active == False:
-        """Zeigt alle Felder des ausgewählten Buches im info_frame an."""
+def info_text_left(event=None):
+    global button
+
+    if button == "left":
         selection = tree.selection()
 
         for widget in info_frame.winfo_children():
-            if widget != info_button_left or info_button_right:
+            if widget != info_button_left and widget != info_button_right:
                 widget.destroy()
 
         if not selection:
@@ -817,7 +817,7 @@ def info_text(event=None):
 
         values = tree.item(selection[0])["values"]
 
-        Frame(info_frame, bg="#26774a", height=30).pack(fill="x")  # 30px Abstand
+        Frame(info_frame, bg="#26774a", height=30).pack(fill="x")
 
         for c, v in zip(columns, values):
             if c == "index":
@@ -849,6 +849,25 @@ def info_text(event=None):
     else:
         pass
 
+
+#-------------------------------------------------------
+
+def info_text_right():
+    global info_frame
+
+    for widget in info_frame.winfo_children():
+        if widget != info_button_left and widget != info_button_right:
+            widget.destroy()
+
+    Button(info_frame, text="current", bg="#289157", activebackground="#289157", fg="white", activeforeground="white").pack(pady=20)
+    Button(info_frame, text="schüler", bg="#289157", activebackground="#289157", fg="white", activeforeground="white").pack()
+    Button(info_frame, text="ich weis doch auch nicht", bg="#289157", activebackground="#289157", fg="white", activeforeground="white").pack()
+
+
+
+
+
+
 #-------------------------------------------------------
 
 def check_covers():
@@ -866,7 +885,6 @@ def check_covers():
             f.write(line + "\n")
 
     reload_table()
-    print("Cover-Check abgeschlossen")
 
 #-------------------------------------------------------
 
@@ -1047,7 +1065,7 @@ buecher = "formated_books.txt"
 buecher = lade_buecher(buecher)  
 create_table(table_frame, buecher)
 
-tree.bind("<<TreeviewSelect>>", info_text)
+tree.bind("<<TreeviewSelect>>", info_text_left)
 
 #------------------------------------------------------------------------------
 
@@ -1058,18 +1076,27 @@ ttk.Separator(frame_bearbeiten, orient="horizontal", ).place(
 
 #------------------------------------------------------------------------------
 
+
 info_frame = Frame(frame_bearbeiten, bg="#26774a")
 info_frame.place(relx=0.836, rely=0.09, relwidth=0.164, relheight=0.91)
 
-is_button_active = False
 
-info_button_left = Button(frame_bearbeiten,  text="Bücher",  bg="#289157",  activebackground="#289157",  fg="white", relief="sunken", activeforeground="white", command=lambda: change_info_text(Button="left")).place(relx=0.836, rely=0.0818, relwidth=0.0815)
+info_button_left = Button(frame_bearbeiten, text="Bücher", bg="#289157",
+    activebackground="#289157", fg="white", relief="sunken",
+    activeforeground="white",
+    command=lambda: change_info_text(buton="left"))
+info_button_left.place(relx=0.836, rely=0.0818, relwidth=0.0815)
 
-info_button_right = Button(frame_bearbeiten, text="Frames",  bg="#289157",   activebackground="#289157", fg="white",                  activeforeground="white", command=lambda: change_info_text(Button="right")).place(relx=0.916, rely=0.0818, relwidth=0.084)
+info_button_right = Button(frame_bearbeiten, text="Frames", bg="#289157",
+    activebackground="#289157", fg="white", relief="raised",
+    activeforeground="white",
+    command=lambda: change_info_text(buton="right"))
+info_button_right.place(relx=0.916, rely=0.0818, relwidth=0.084)
+
 
 #------------------------------------------------------------------------------
 
-info_text()
+info_text_left()
 
 #------------------------------------------------------------------------------
 
@@ -1099,7 +1126,7 @@ m2.add_command(label="Löschen", command=lambda: delete(tree))
 m.add_separator()
 m.add_command(label="Löschen")
 m.add_command(label="Neu")
-m.add_command(label="Bearbeiten", command=info_text)
+m.add_command(label="Bearbeiten", command=info_text_left)
 
 heading_m = Menu(root,tearoff=0)
 
