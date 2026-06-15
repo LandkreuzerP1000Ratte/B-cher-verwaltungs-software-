@@ -42,14 +42,11 @@ selected_row = None
 button = None
 columns = ["index" ,"barcode","titel","autor","verlag","status","wer","art", "cover"]
 
-print(f'{screen_width}\n{screen_height}')
-
 # -------------------------
 # Datenklasse für ein Buch
 # -------------------------
 class Book:
     def __init__(self, index, barcode, titel, autor, verlag, status, wer, art, cover):
-        # Attribute eines Buches
         self.index = index
         self.titel = titel
         self.autor = autor
@@ -62,9 +59,21 @@ class Book:
         
 
     def __str__(self):
-        # Darstellung eines Buches als String (für Listboxen)
         return f"{self.index} | {self.barcode} | {self.titel} | {self.autor} | {self.verlag} | {self.status} | {self.wer} | {self.art} | {self.cover}"
     
+    class Schuler:
+        def __init__(self, index, name, ausgeliehen, was, verbot, bis, stand):
+            self.index = index
+            self.name = name
+            self.ausgeliehen = ausgeliehen
+            self.was = was
+            self.verbot = verbot
+            self.bis = bis
+            self.stand = stand
+
+        def __str__(self):
+            return f"{self.index} | {self.name} | {self.ausgeliehen} | {self.was} | {self.verbot} | {self.bis} | {self.wer} | {self.stand}"
+
 #-------------------------------------------------------
 
 def donothing():  # guter anfang
@@ -72,31 +81,39 @@ def donothing():  # guter anfang
 
 #-------------------------------------------------------
 
-def reload_table():
-    
+def reload_table(art):
+
     global buecher
 
     tree.delete(*tree.get_children())
 
-    for index, buch in enumerate(buecher):
-        tag = "evenrow" if index % 2 == 0 else "oddrow"
+    if art == "bucher":
+        for index, buch in enumerate(buecher):
+            tag = "evenrow" if index % 2 == 0 else "oddrow"
 
-        tree.insert(
-            "",
-            "end",
-            values=(
-                buch.index,
-                buch.barcode,
-                buch.titel,
-                buch.autor,
-                buch.verlag,
-                buch.status,
-                buch.wer,
-                buch.art,
-                buch.cover
-            ),
-            tags=(tag,)
-        )
+            tree.insert(
+                "",
+                "end",
+                values=(
+                    buch.index,
+                    buch.barcode,
+                    buch.titel,
+                    buch.autor,
+                    buch.verlag,
+                    buch.status,
+                    buch.wer,
+                    buch.art,
+                    buch.cover
+                ),
+                tags=(tag,)
+            )
+
+    elif art == "schuler":
+        pass
+
+    else:
+        print(f"{art} is not an option")
+
 
 #---------------------------------------------------------------------
 #---------------------------------------------------------------------
@@ -218,7 +235,6 @@ def delete(tree):
     path = os.path.join(__location__, "data", "covers", bar)
     os.remove(path)
 
-
 #-------------------------------------------------------
 
 def save_books(tree):
@@ -264,7 +280,7 @@ def delete_selected_row():
         tree.delete(selected)
         del buecher[index]
 
-    reload_table()
+    reload_table("bucher")
 #-------------------------------------------------------
 
 def config_window():
@@ -351,6 +367,7 @@ def apply_column_visibility():
         else:
             tree.column(col, width=0, minwidth=0, stretch=False)
 
+#-------------------------------------------------------
 
 def pop_change_headings():
     global change_headings
@@ -438,9 +455,9 @@ def create_table(parent, buecher):
 
     style.configure(
     "Vertical.TScrollbar",
-    background="#289157",      # Schieber-Farbe
-    troughcolor="#26774a",     # Hintergrund der Leiste
-    arrowcolor="white",        # Pfeil-Farbe
+    background="#289157",
+    troughcolor="#26774a",
+    arrowcolor="white",
     bordercolor="#289157",
     lightcolor="#289157",
     darkcolor="#1a5c38"
@@ -449,7 +466,7 @@ def create_table(parent, buecher):
 
     style.map(
         "Vertical.TScrollbar",
-        background=[("active", "#26A760")]  # Farbe beim Hovern
+        background=[("active", "#26A760")]
     )
 
     tree.tag_configure("evenrow", background="#289157")
@@ -546,7 +563,7 @@ def sort_buecher(event=None):
             if suchtext in wert:
                 buecher.append(buch)
 
-    reload_table()
+    reload_table("bucher")
 
 #-------------------------------------------------------
 
@@ -796,8 +813,6 @@ def change_info_text(buton):
         info_button_left.config(relief="raised")
         info_button_right.config(relief="sunken")
 
-
-
 #-------------------------------------------------------
 
 def info_text_left(event=None):
@@ -849,7 +864,6 @@ def info_text_left(event=None):
     else:
         pass
 
-
 #-------------------------------------------------------
 
 def info_text_right():
@@ -862,11 +876,6 @@ def info_text_right():
     Button(info_frame, text="current", bg="#289157", activebackground="#289157", fg="white", activeforeground="white").pack(pady=20)
     Button(info_frame, text="schüler", bg="#289157", activebackground="#289157", fg="white", activeforeground="white").pack()
     Button(info_frame, text="ich weis doch auch nicht", bg="#289157", activebackground="#289157", fg="white", activeforeground="white").pack()
-
-
-
-
-
 
 #-------------------------------------------------------
 
@@ -884,7 +893,7 @@ def check_covers():
             line = f"{b.index} | {b.barcode} | {b.titel} | {b.autor} | {b.verlag} | {b.status} | {b.wer} | {b.art} | {b.cover}"
             f.write(line + "\n")
 
-    reload_table()
+    reload_table("bucher")
 
 #-------------------------------------------------------
 
@@ -906,6 +915,7 @@ def cover_bearbeiten():
 #-------------------------------------------------------
 
 
+
 # -------------------------
 # Hauptprogramm
 # -------------------------
@@ -924,11 +934,10 @@ print(__location__)
 # Frames erstellen (Seiten)
 frame_start = Frame(root, bg="#289157")
 frame_bearbeiten = Frame(root, bg="#26774a")
-frame_ausleihe = Frame(root, bg="#289157")
 
 
 # Alle Frames im Fenster platzieren (übereinander)
-for frame in (frame_start, frame_bearbeiten, frame_ausleihe):
+for frame in (frame_start, frame_bearbeiten):
     frame.place(relwidth=1, relheight=1)
 
 
@@ -1022,7 +1031,7 @@ menu = tk.Menu(search_options, tearoff=0,
     font=("Calibri", 11),
     borderwidth=0,
     relief="flat",
-    activeborderwidth=0  # ← das ist der Übeltäter
+    activeborderwidth=0
 )
 
 menu.config(bg="#289157")
