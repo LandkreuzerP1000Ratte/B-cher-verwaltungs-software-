@@ -40,7 +40,9 @@ checkbox_vars = {}
 table_entries = []
 selected_row = None
 button = None
-columns = ["index" ,"barcode","titel","autor","verlag","status","wer","art", "cover"]
+columns_books = ["index" ,"barcode","titel","autor","verlag","status","wer","art", "cover"]
+colums_schuler = ["index", "ausgeliehen", "was", "verbot", "wie_lange"]
+selected_frame = "bucher"
 
 # -------------------------
 # Datenklasse für ein Buch
@@ -389,7 +391,7 @@ def pop_change_headings():
 
     checkbox_vars = {}  # neu aufbauen für dieses Fenster
 
-    for en, c in enumerate(columns, start=1):
+    for en, c in enumerate(columns_books, start=1):
             if c == "index":
                 pass
             else:
@@ -402,7 +404,7 @@ def pop_change_headings():
         change_headings,
         text="Anwenden",
         command=apply_column_visibility
-    ).grid(row=len(columns) + 1, pady=10)
+    ).grid(row=len(columns_books) + 1, pady=10)
 
 #---------------------------------------------------------
 
@@ -447,7 +449,7 @@ def create_table(parent, buecher):
     )
     tree = ttk.Treeview(
         parent,
-        columns=columns,
+        columns=columns_books,
         show="headings",
         selectmode="browse",
         height=52
@@ -482,39 +484,48 @@ def create_table(parent, buecher):
     parent.columnconfigure(0, weight=1)
     parent.rowconfigure(0, weight=1)
 
-    for col in columns:
-        tree.heading(col, text=col.capitalize())
+#----------------------------------------------------------------------
 
-        if col == "index":
-            tree.column(col, width=0, minwidth=0, stretch=False)
-        else:
-            tree.column(col, anchor="w", stretch=True)
+    if selected_frame == "bucher":
+        for col in columns_books:
+            tree.heading(col, text=col.capitalize())
 
-    get_width(tree)
+            if col == "index":
+                tree.column(col, width=0, minwidth=0, stretch=False)
+            else:
+                tree.column(col, anchor="w", stretch=True)
 
-    # Daten einfügen
-    for buch in buecher:
+        get_width(tree)
 
-        tag = "evenrow" if int(buch.index) % 2 == 0 else "oddrow"
+        # Daten einfügen
+        for buch in buecher:
+            print(buecher)
 
-        tree.insert(
-            "",
-            "end",
-            values=(
-                buch.index,
-                buch.barcode,
-                buch.titel,
-                buch.autor,
-                buch.verlag,
-                buch.status,
-                buch.wer,
-                buch.art,
-                buch.cover
-            ),
-            tags=(tag,)
-        )
+            tag = "evenrow" if int(buch.index) % 2 == 0 else "oddrow"
 
-    tree.bind("<Button-3>", popup)
+            tree.insert(
+                "",
+                "end",
+                values=(
+                    buch.index,
+                    buch.barcode,
+                    buch.titel,
+                    buch.autor,
+                    buch.verlag,
+                    buch.status,
+                    buch.wer,
+                    buch.art,
+                    buch.cover
+                ),
+                tags=(tag,)
+            )
+
+        tree.bind("<Button-3>", popup)
+
+    elif selected_frame == "schuler":
+        pass
+
+#----------------------------------------------------------------------
 
 #---------------------------------------------------------
 
@@ -834,7 +845,7 @@ def info_text_left(event=None):
 
         Frame(info_frame, bg="#26774a", height=30).pack(fill="x")
 
-        for c, v in zip(columns, values):
+        for c, v in zip(columns_books, values):
             if c == "index":
                 continue
             Label(info_frame, text=c.capitalize(), bg="#1fc76a", fg="white",
@@ -843,7 +854,7 @@ def info_text_left(event=None):
                 font=("Arial", 9), anchor="w").pack(fill="x", padx=10)
 
     # Cover laden
-        data = dict(zip(columns, values))
+        data = dict(zip(columns_books, values))
         cover_name = data.get("barcode", "")
 
         if cover_name:
@@ -1003,7 +1014,7 @@ separator.place(
 #------------------------------------------------------------------------------
 
 drop_down_op = []
-for index, x in enumerate(columns):
+for index, x in enumerate(columns_books):
     if index != 0:
         drop_down_op.append(x)
 
@@ -1071,7 +1082,7 @@ table_frame = Frame(container, bg="#289157")
 table_frame.grid(row=0, column=0, sticky="nsew")
 
 buecher = "formated_books.txt"
-buecher = lade_buecher(buecher)  
+buecher = lade_buecher(buecher)
 create_table(table_frame, buecher)
 
 tree.bind("<<TreeviewSelect>>", info_text_left)
